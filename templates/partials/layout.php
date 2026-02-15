@@ -31,6 +31,8 @@
     <?php endif; ?>
     <?php if ($hasBuiltJs): ?>
     <script src="<?php echo h($jsSrc); ?>" defer></script>
+    <?php else: ?>
+    <script src="/assets/js/main.js" defer></script>
     <?php endif; ?>
     <script>
         window.appSettings = <?php echo json_encode([
@@ -100,6 +102,33 @@
 
     <!-- Modal container -->
     <div id="modal-container"></div>
+
+    <script>
+        if (typeof window.showToast !== 'function') {
+            window.showToast = function(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                if (!container) {
+                    return;
+                }
+
+                const toast = document.createElement('div');
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    info: 'bg-blue-500',
+                    warning: 'bg-yellow-500'
+                };
+
+                toast.className = `${colors[type] || colors.info} text-white px-4 py-2 rounded-md shadow-md mb-2`;
+                toast.textContent = message;
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            };
+        }
+    </script>
 
     <?php if (!empty($page_script)): ?>
         <?php echo $page_script; ?>

@@ -4,30 +4,34 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 
 $db = getDB();
+$storeId = getCurrentStoreId();
 
 if ($method === 'GET') {
     try {
         // Giacenze attuali
-        $stmt = $db->query("
+        $stmt = $db->prepare("
             SELECT p.id, p.name, p.unit_type,
                    COALESCE(SUM(CASE WHEN im.type = 'in' THEN im.qty ELSE -im.qty END), 0) as stock
             FROM products p
-            LEFT JOIN inventory_movements im ON p.id = im.product_id
-            WHERE p.is_active = 1
+            LEFT JOIN inventory_movements im ON p.id = im.product_id AND im.store_id = p.store_id
+            WHERE p.is_active = 1 AND p.store_id = ?
             GROUP BY p.id, p.name, p.unit_type
             ORDER BY p.name
         ");
+        $stmt->execute([$storeId]);
         $stock = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Movimenti recenti
-        $stmt = $db->query("
+        $stmt = $db->prepare("
             SELECT im.*, p.name as product_name, u.name as user_name
             FROM inventory_movements im
-            JOIN products p ON im.product_id = p.id
+            JOIN products p ON im.product_id = p.id AND p.store_id = im.store_id
             JOIN users u ON im.user_id = u.id
+            WHERE im.store_id = ?
             ORDER BY im.created_at DESC
             LIMIT 50
         ");
+        $stmt->execute([$storeId]);
         $movements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         successResponse(['stock' => $stock, 'movements' => $movements]);
@@ -55,10 +59,10 @@ if ($method === 'GET') {
 
     try {
         $stmt = $db->prepare("
-            INSERT INTO inventory_movements (product_id, type, qty, unit_type, cost_total, reason, note, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO inventory_movements (product_id, type, qty, unit_type, cost_total, reason, note, user_id, store_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$product_id, $type, $qty, $unit_type, $cost_total, $reason, $note, $_SESSION['user_id']]);
+        $stmt->execute([$product_id, $type, $qty, $unit_type, $cost_total, $reason, $note, $_SESSION['user_id'], $storeId]);
         successResponse(['id' => $db->lastInsertId()], 'Movimento registrato');
     } catch (Exception $e) {
         logError("Create inventory movement error: " . $e->getMessage());

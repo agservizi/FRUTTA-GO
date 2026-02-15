@@ -10,6 +10,7 @@ if ($method === 'POST') {
 
     if ($action === 'logout') {
         // Logout
+        unset($_SESSION['store_id']);
         setcookie(session_name(), '', [
             'expires' => time() - 3600,
             'path' => '/',
@@ -23,21 +24,27 @@ if ($method === 'POST') {
         // Login
         $username = $data['username'] ?? '';
         $password = $data['password'] ?? '';
+        $storeCode = trim((string)($data['store_code'] ?? 'main'));
         $remember = filter_var($data['remember'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        if (empty($username) || empty($password)) {
-            errorResponse('Username e password richiesti');
+        if (empty($username) || empty($password) || empty($storeCode)) {
+            errorResponse('Username, password e codice negozio richiesti');
         }
 
         try {
-            $stmt = getDB()->prepare("SELECT * FROM users WHERE email = ? OR name = ?");
-            $stmt->execute([$username, $username]);
+            $stmt = getDB()->prepare("SELECT u.*
+                FROM users u
+                JOIN stores s ON s.id = u.store_id
+                WHERE s.code = ? AND s.is_active = 1 AND (u.email = ? OR u.name = ?)
+                LIMIT 1");
+            $stmt->execute([$storeCode, $username, $username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password_hash'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_role'] = $user['role'];
+                $_SESSION['store_id'] = (int)$user['store_id'];
 
                 if ($remember) {
                     setcookie(session_name(), session_id(), [

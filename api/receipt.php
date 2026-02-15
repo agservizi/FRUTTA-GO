@@ -20,14 +20,15 @@ if (!$saleId) {
 }
 
 try {
+    $storeId = getCurrentStoreId();
     // Recupera dati vendita
     $stmt = getDB()->prepare("
         SELECT s.*, u.name as user_name
         FROM sales s
         JOIN users u ON s.user_id = u.id
-        WHERE s.id = ?
+        WHERE s.id = ? AND s.store_id = ?
     ");
-    $stmt->execute([$saleId]);
+    $stmt->execute([$saleId, $storeId]);
     $sale = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$sale) {
@@ -38,11 +39,11 @@ try {
     $stmt = getDB()->prepare("
         SELECT si.*, p.name as product_name
         FROM sale_items si
-        JOIN products p ON si.product_id = p.id
-        WHERE si.sale_id = ?
+        JOIN products p ON si.product_id = p.id AND p.store_id = si.store_id
+        WHERE si.sale_id = ? AND si.store_id = ?
         ORDER BY si.id
     ");
-    $stmt->execute([$saleId]);
+    $stmt->execute([$saleId, $storeId]);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Genera HTML ricevuta

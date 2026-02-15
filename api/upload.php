@@ -20,6 +20,7 @@ if (!isset($_FILES['image'])) {
 
 $file = $_FILES['image'];
 $productId = $_POST['product_id'] ?? 0;
+$storeId = getCurrentStoreId();
 
 // Valida file
 $validation = validateImageFile($file);
@@ -50,8 +51,8 @@ try {
     }
 
     // Aggiorna database
-    $stmt = getDB()->prepare("UPDATE products SET image_url = ? WHERE id = ?");
-    $stmt->execute([$imageUrl, $productId]);
+    $stmt = getDB()->prepare("UPDATE products SET image_url = ? WHERE id = ? AND store_id = ?");
+    $stmt->execute([$imageUrl, $productId, $storeId]);
 
     // Pulisci file temporaneo
     unlink($resizedImage);

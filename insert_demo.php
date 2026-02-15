@@ -4,6 +4,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 try {
     $pdo = getDB();
+    $storeId = getCurrentStoreId();
 
     // Inserisci categorie demo
     $categories = [
@@ -16,13 +17,13 @@ try {
 
     $categoryIds = [];
     foreach ($categories as $name) {
-        $stmt = $pdo->prepare("SELECT id FROM categories WHERE name = ?");
-        $stmt->execute([$name]);
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE name = ? AND store_id = ?");
+        $stmt->execute([$name, $storeId]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($existing) {
             $categoryIds[$name] = $existing['id'];
         } else {
-            $pdo->prepare("INSERT INTO categories (name) VALUES (?)")->execute([$name]);
+            $pdo->prepare("INSERT INTO categories (name, store_id) VALUES (?, ?)")->execute([$name, $storeId]);
             $categoryIds[$name] = $pdo->lastInsertId();
         }
     }
@@ -69,11 +70,20 @@ try {
 
     foreach ($products as $prod) {
         $categoryId = $categoryIds[$prod['category']] ?? null;
-        $pdo->prepare("INSERT INTO products (name, category_id, unit_type, price_sale, price_cost, is_active, is_favorite) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id=id")
-             ->execute([$prod['name'], $categoryId, $prod['unit_type'], $prod['price_sale'], $prod['price_cost'], $prod['is_active'], $prod['is_favorite']]);
+        $checkStmt = $pdo->prepare("SELECT id FROM products WHERE store_id = ? AND name = ? LIMIT 1");
+        $checkStmt->execute([$storeId, $prod['name']]);
+        $existingProductId = $checkStmt->fetchColumn();
+
+        if ($existingProductId) {
+            $pdo->prepare("UPDATE products SET category_id = ?, unit_type = ?, price_sale = ?, price_cost = ?, is_active = ?, is_favorite = ? WHERE id = ? AND store_id = ?")
+                ->execute([$categoryId, $prod['unit_type'], $prod['price_sale'], $prod['price_cost'], $prod['is_active'], $prod['is_favorite'], $existingProductId, $storeId]);
+        } else {
+            $pdo->prepare("INSERT INTO products (store_id, name, category_id, unit_type, price_sale, price_cost, is_active, is_favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+                ->execute([$storeId, $prod['name'], $categoryId, $prod['unit_type'], $prod['price_sale'], $prod['price_cost'], $prod['is_active'], $prod['is_favorite']]);
+        }
     }
 
-    echo "Dati demo inseriti con successo!\n";
+    echo "Dati demo inseriti con successo per store_id={$storeId}!\n";
 } catch (Exception $e) {
     echo "Errore: " . $e->getMessage() . "\n";
 }

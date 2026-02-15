@@ -4,13 +4,16 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 try {
     $pdo = getDB();
+    $storeId = getCurrentStoreId();
+
     // Ordine per evitare violazioni di foreign key
-    $tables = ['sale_items', 'purchase_items', 'sales', 'purchases', 'products', 'categories'];
+    $tables = ['sale_items', 'purchase_items', 'inventory_movements', 'sales', 'purchases', 'products', 'categories', 'suppliers'];
     foreach ($tables as $table) {
-        $pdo->exec("DELETE FROM $table");
-        echo "Tabella $table svuotata.\n";
+        $stmt = $pdo->prepare("DELETE FROM $table WHERE store_id = ?");
+        $stmt->execute([$storeId]);
+        echo "Tabella $table ripulita per store_id={$storeId}.\n";
     }
-    echo "Dati demo ripuliti con successo!\n";
+    echo "Dati demo ripuliti con successo per store_id={$storeId}!\n";
 } catch (Exception $e) {
     echo "Errore: " . $e->getMessage() . "\n";
 }

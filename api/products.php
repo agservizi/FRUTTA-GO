@@ -4,16 +4,18 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 
 $db = getDB();
+$storeId = getCurrentStoreId();
 
 if ($method === 'GET') {
     try {
-        $stmt = $db->query("
+        $stmt = $db->prepare("
             SELECT p.*, c.name as category_name
             FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.is_active = 1
+            LEFT JOIN categories c ON p.category_id = c.id AND c.store_id = p.store_id
+            WHERE p.is_active = 1 AND p.store_id = ?
             ORDER BY p.name
         ");
+        $stmt->execute([$storeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         successResponse($products);
     } catch (Exception $e) {
@@ -39,10 +41,10 @@ if ($method === 'GET') {
 
     try {
         $stmt = $db->prepare("
-            INSERT INTO products (name, category_id, unit_type, price_sale, price_cost, is_favorite)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO products (name, category_id, unit_type, price_sale, price_cost, is_favorite, store_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$name, $category_id, $unit_type, $price_sale, $price_cost, $is_favorite]);
+        $stmt->execute([$name, $category_id, $unit_type, $price_sale, $price_cost, $is_favorite, $storeId]);
         successResponse(['id' => $db->lastInsertId()], 'Prodotto creato');
     } catch (Exception $e) {
         logError("Create product error: " . $e->getMessage());
@@ -73,7 +75,8 @@ if ($method === 'GET') {
         }
 
         $values[] = $id;
-        $stmt = $db->prepare("UPDATE products SET " . implode(', ', $fields) . " WHERE id = ?");
+        $stmt = $db->prepare("UPDATE products SET " . implode(', ', $fields) . " WHERE id = ? AND store_id = ?");
+        $values[] = $storeId;
         $stmt->execute($values);
         successResponse(null, 'Prodotto aggiornato');
     } catch (Exception $e) {
@@ -88,8 +91,8 @@ if ($method === 'GET') {
     $id = $_GET['id'] ?? 0;
 
     try {
-        $stmt = $db->prepare("UPDATE products SET is_active = 0 WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $db->prepare("UPDATE products SET is_active = 0 WHERE id = ? AND store_id = ?");
+        $stmt->execute([$id, $storeId]);
         successResponse(null, 'Prodotto disattivato');
     } catch (Exception $e) {
         logError("Delete product error: " . $e->getMessage());

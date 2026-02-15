@@ -2,6 +2,7 @@
 // api/purchases.php - API acquisti
 $method = $_SERVER['REQUEST_METHOD'];
 $db = getDB();
+$storeId = getCurrentStoreId();
 
 function ensurePurchasesSchema(PDO $db) {
     $db->exec("CREATE TABLE IF NOT EXISTS suppliers (
@@ -22,6 +23,7 @@ function ensurePurchasesSchema(PDO $db) {
         note TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         user_id INT NOT NULL,
+        store_id INT NOT NULL DEFAULT 1,
         FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )");
@@ -34,6 +36,7 @@ function ensurePurchasesSchema(PDO $db) {
         unit_type ENUM('kg', 'pz', 'cassetta') NOT NULL,
         unit_cost DECIMAL(10,2) NOT NULL,
         line_total DECIMAL(10,2) NOT NULL,
+        store_id INT NOT NULL DEFAULT 1,
         FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
     )");
@@ -43,19 +46,21 @@ ensurePurchasesSchema($db);
 
 if ($method === 'GET') {
     try {
-        $stmt = $db->query("
+        $stmt = $db->prepare("
             SELECT p.id, p.total, p.note, p.created_at,
                    s.name as supplier_name,
                    u.name as user_name,
                    COUNT(pi.id) as items_count
             FROM purchases p
-            LEFT JOIN suppliers s ON p.supplier_id = s.id
+            LEFT JOIN suppliers s ON p.supplier_id = s.id AND s.store_id = p.store_id
             JOIN users u ON p.user_id = u.id
-            LEFT JOIN purchase_items pi ON p.id = pi.purchase_id
+            LEFT JOIN purchase_items pi ON p.id = pi.purchase_id AND pi.store_id = p.store_id
+            WHERE p.store_id = ?
             GROUP BY p.id, p.total, p.note, p.created_at, s.name, u.name
             ORDER BY p.created_at DESC
             LIMIT 100
         ");
+        $stmt->execute([$storeId]);
         $purchases = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         successResponse(['purchases' => $purchases]);
@@ -94,13 +99,13 @@ if ($method === 'GET') {
             $total += $qty * $unit_cost;
         }
 
-        $stmt = $db->prepare("INSERT INTO purchases (supplier_id, total, note, user_id) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$supplier_id ?: null, $total, $note ?: null, $_SESSION['user_id']]);
+        $stmt = $db->prepare("INSERT INTO purchases (supplier_id, total, note, user_id, store_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$supplier_id ?: null, $total, $note ?: null, $_SESSION['user_id'], $storeId]);
         $purchase_id = $db->lastInsertId();
 
-        $itemStmt = $db->prepare("INSERT INTO purchase_items (purchase_id, product_id, qty, unit_type, unit_cost, line_total) VALUES (?, ?, ?, ?, ?, ?)");
-        $invStmt = $db->prepare("INSERT INTO inventory_movements (product_id, type, qty, unit_type, cost_total, note, user_id) VALUES (?, 'in', ?, ?, ?, ?, ?)");
-        $costUpdateStmt = $db->prepare("UPDATE products SET price_cost = ? WHERE id = ?");
+        $itemStmt = $db->prepare("INSERT INTO purchase_items (purchase_id, product_id, qty, unit_type, unit_cost, line_total, store_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $invStmt = $db->prepare("INSERT INTO inventory_movements (product_id, type, qty, unit_type, cost_total, note, user_id, store_id) VALUES (?, 'in', ?, ?, ?, ?, ?, ?)");
+        $costUpdateStmt = $db->prepare("UPDATE products SET price_cost = ? WHERE id = ? AND store_id = ?");
 
         foreach ($items as $item) {
             $product_id = (int)$item['product_id'];
@@ -109,12 +114,12 @@ if ($method === 'GET') {
             $unit_type = $item['unit_type'];
             $line_total = $qty * $unit_cost;
 
-            $itemStmt->execute([$purchase_id, $product_id, $qty, $unit_type, $unit_cost, $line_total]);
+            $itemStmt->execute([$purchase_id, $product_id, $qty, $unit_type, $unit_cost, $line_total, $storeId]);
 
             $movementNote = 'Acquisto #' . $purchase_id;
-            $invStmt->execute([$product_id, $qty, $unit_type, $line_total, $movementNote, $_SESSION['user_id']]);
+            $invStmt->execute([$product_id, $qty, $unit_type, $line_total, $movementNote, $_SESSION['user_id'], $storeId]);
 
-            $costUpdateStmt->execute([$unit_cost, $product_id]);
+            $costUpdateStmt->execute([$unit_cost, $product_id, $storeId]);
         }
 
         $db->commit();

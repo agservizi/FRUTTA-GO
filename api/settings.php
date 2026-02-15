@@ -2,16 +2,21 @@
 // api/settings.php - API impostazioni generali
 $method = $_SERVER['REQUEST_METHOD'];
 $db = getDB();
+$storeId = getCurrentStoreId();
 
 function ensureSettingsSchema(PDO $db) {
-    $db->exec("CREATE TABLE IF NOT EXISTS app_settings (
+    $db->exec("CREATE TABLE IF NOT EXISTS store_settings (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        key_name VARCHAR(100) NOT NULL UNIQUE,
+        store_id INT NOT NULL,
+        key_name VARCHAR(100) NOT NULL,
         value_text TEXT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_store_key (store_id, key_name)
     )");
+}
 
-    $stmt = $db->prepare("INSERT INTO app_settings (key_name, value_text) VALUES (?, ?) ON DUPLICATE KEY UPDATE value_text = value_text");
+function ensureDefaultStoreSettings(PDO $db, int $storeId) {
+    $stmt = $db->prepare("INSERT INTO store_settings (store_id, key_name, value_text) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value_text = value_text");
     $defaults = [
         'store_name' => APP_NAME,
         'currency_symbol' => '€',
@@ -21,15 +26,17 @@ function ensureSettingsSchema(PDO $db) {
     ];
 
     foreach ($defaults as $key => $value) {
-        $stmt->execute([$key, $value]);
+        $stmt->execute([$storeId, $key, $value]);
     }
 }
 
 ensureSettingsSchema($db);
+ensureDefaultStoreSettings($db, $storeId);
 
 if ($method === 'GET') {
     try {
-        $stmt = $db->query("SELECT key_name, value_text FROM app_settings");
+        $stmt = $db->prepare("SELECT key_name, value_text FROM store_settings WHERE store_id = ?");
+        $stmt->execute([$storeId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $settings = [];
@@ -52,12 +59,12 @@ if ($method === 'GET') {
 
     try {
         $db->beginTransaction();
-        $stmt = $db->prepare("INSERT INTO app_settings (key_name, value_text) VALUES (?, ?) ON DUPLICATE KEY UPDATE value_text = VALUES(value_text)");
+        $stmt = $db->prepare("INSERT INTO store_settings (store_id, key_name, value_text) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value_text = VALUES(value_text)");
 
         foreach ($allowedKeys as $key) {
             if (array_key_exists($key, $data)) {
                 $value = is_scalar($data[$key]) ? trim((string)$data[$key]) : '';
-                $stmt->execute([$key, $value]);
+                $stmt->execute([$storeId, $key, $value]);
             }
         }
 

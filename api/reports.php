@@ -4,6 +4,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 
 $db = getDB();
+$storeId = getCurrentStoreId();
 
 if ($method === 'GET') {
     $type = $_GET['type'] ?? 'daily';
@@ -11,25 +12,27 @@ if ($method === 'GET') {
     try {
         if ($type === 'daily') {
             // Report giornaliero
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT
                     DATE(created_at) as date,
                     COUNT(*) as sales_count,
                     SUM(total) as total_revenue,
                     AVG(total) as avg_sale
                 FROM sales
-                WHERE DATE(created_at) = CURDATE()
+                WHERE store_id = ? AND DATE(created_at) = CURDATE()
                 GROUP BY DATE(created_at)
             ");
+            $stmt->execute([$storeId]);
             $daily = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['date' => date('Y-m-d'), 'sales_count' => 0, 'total_revenue' => 0, 'avg_sale' => 0];
 
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT COALESCE(SUM(si.qty * COALESCE(p.price_cost, 0)), 0) as total_cost
                 FROM sale_items si
                 JOIN sales s ON si.sale_id = s.id
-                JOIN products p ON si.product_id = p.id
-                WHERE DATE(s.created_at) = CURDATE()
+                JOIN products p ON si.product_id = p.id AND p.store_id = s.store_id
+                WHERE s.store_id = ? AND DATE(s.created_at) = CURDATE()
             ");
+            $stmt->execute([$storeId]);
             $dailyCost = $stmt->fetch(PDO::FETCH_ASSOC);
             $daily['total_cost'] = (float)($dailyCost['total_cost'] ?? 0);
             $daily['total_profit'] = (float)$daily['total_revenue'] - (float)$daily['total_cost'];
@@ -38,7 +41,7 @@ if ($method === 'GET') {
                 : 0;
 
             // Top 10 prodotti oggi
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT
                     p.name,
                     SUM(si.qty) as total_qty,
@@ -53,18 +56,19 @@ if ($method === 'GET') {
                 FROM sale_items si
                 JOIN products p ON si.product_id = p.id
                 JOIN sales s ON si.sale_id = s.id
-                WHERE DATE(s.created_at) = CURDATE()
+                WHERE s.store_id = ? AND p.store_id = s.store_id AND DATE(s.created_at) = CURDATE()
                 GROUP BY p.id, p.name
                 ORDER BY total_revenue DESC
                 LIMIT 10
             ");
+            $stmt->execute([$storeId]);
             $top_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             successResponse(['daily' => $daily, 'top_products' => $top_products]);
 
         } elseif ($type === 'monthly') {
             // Report mensile
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT
                     DATE_FORMAT(created_at, '%Y-%m') as month,
                     COUNT(*) as sales_count,
@@ -73,18 +77,20 @@ if ($method === 'GET') {
                     MAX(total) as best_day_revenue,
                     DATE(MAX(created_at)) as best_day
                 FROM sales
-                WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())
+                WHERE store_id = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())
                 GROUP BY DATE_FORMAT(created_at, '%Y-%m')
             ");
+            $stmt->execute([$storeId]);
             $monthly = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['month' => date('Y-m'), 'sales_count' => 0, 'total_revenue' => 0, 'avg_sale' => 0, 'best_day_revenue' => 0, 'best_day' => null];
 
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT COALESCE(SUM(si.qty * COALESCE(p.price_cost, 0)), 0) as total_cost
                 FROM sale_items si
                 JOIN sales s ON si.sale_id = s.id
-                JOIN products p ON si.product_id = p.id
-                WHERE MONTH(s.created_at) = MONTH(CURDATE()) AND YEAR(s.created_at) = YEAR(CURDATE())
+                JOIN products p ON si.product_id = p.id AND p.store_id = s.store_id
+                WHERE s.store_id = ? AND MONTH(s.created_at) = MONTH(CURDATE()) AND YEAR(s.created_at) = YEAR(CURDATE())
             ");
+            $stmt->execute([$storeId]);
             $monthlyCost = $stmt->fetch(PDO::FETCH_ASSOC);
             $monthly['total_cost'] = (float)($monthlyCost['total_cost'] ?? 0);
             $monthly['total_profit'] = (float)$monthly['total_revenue'] - (float)$monthly['total_cost'];
@@ -93,7 +99,7 @@ if ($method === 'GET') {
                 : 0;
 
             // Prodotti più venduti mese
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT
                     p.name,
                     SUM(si.qty) as total_qty,
@@ -108,15 +114,16 @@ if ($method === 'GET') {
                 FROM sale_items si
                 JOIN products p ON si.product_id = p.id
                 JOIN sales s ON si.sale_id = s.id
-                WHERE MONTH(s.created_at) = MONTH(CURDATE()) AND YEAR(s.created_at) = YEAR(CURDATE())
+                WHERE s.store_id = ? AND p.store_id = s.store_id AND MONTH(s.created_at) = MONTH(CURDATE()) AND YEAR(s.created_at) = YEAR(CURDATE())
                 GROUP BY p.id, p.name
                 ORDER BY total_revenue DESC
                 LIMIT 10
             ");
+            $stmt->execute([$storeId]);
             $top_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Andamento giornaliero del mese
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT
                     DATE(s.created_at) as day,
                     COUNT(DISTINCT s.id) as sales_count,
@@ -131,10 +138,11 @@ if ($method === 'GET') {
                 FROM sale_items si
                 JOIN sales s ON si.sale_id = s.id
                 JOIN products p ON si.product_id = p.id
-                WHERE MONTH(s.created_at) = MONTH(CURDATE()) AND YEAR(s.created_at) = YEAR(CURDATE())
+                WHERE s.store_id = ? AND p.store_id = s.store_id AND MONTH(s.created_at) = MONTH(CURDATE()) AND YEAR(s.created_at) = YEAR(CURDATE())
                 GROUP BY DATE(s.created_at)
                 ORDER BY DATE(s.created_at) DESC
             ");
+            $stmt->execute([$storeId]);
             $daily_breakdown = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             successResponse(['monthly' => $monthly, 'top_products' => $top_products, 'daily_breakdown' => $daily_breakdown]);

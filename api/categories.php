@@ -4,10 +4,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 
 $db = getDB();
+$storeId = getCurrentStoreId();
 
 if ($method === 'GET') {
     try {
-        $stmt = $db->query("SELECT * FROM categories ORDER BY sort_order, name");
+        $stmt = $db->prepare("SELECT * FROM categories WHERE store_id = ? ORDER BY sort_order, name");
+        $stmt->execute([$storeId]);
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
         successResponse($categories);
     } catch (Exception $e) {
@@ -28,8 +30,8 @@ if ($method === 'GET') {
     }
 
     try {
-        $stmt = $db->prepare("INSERT INTO categories (name, sort_order) VALUES (?, ?)");
-        $stmt->execute([$name, $sort_order]);
+        $stmt = $db->prepare("INSERT INTO categories (name, sort_order, store_id) VALUES (?, ?, ?)");
+        $stmt->execute([$name, $sort_order, $storeId]);
         successResponse(['id' => $db->lastInsertId()], 'Categoria creata');
     } catch (Exception $e) {
         logError("Create categories error: " . $e->getMessage());
@@ -50,8 +52,8 @@ if ($method === 'GET') {
     }
 
     try {
-        $stmt = $db->prepare("UPDATE categories SET name = ?, sort_order = ? WHERE id = ?");
-        $stmt->execute([$name, $sort_order, $id]);
+        $stmt = $db->prepare("UPDATE categories SET name = ?, sort_order = ? WHERE id = ? AND store_id = ?");
+        $stmt->execute([$name, $sort_order, $id, $storeId]);
         successResponse(null, 'Categoria aggiornata');
     } catch (Exception $e) {
         logError("Update categories error: " . $e->getMessage());
@@ -68,16 +70,16 @@ if ($method === 'GET') {
     }
 
     try {
-        $stmt = $db->prepare("SELECT COUNT(*) FROM products WHERE category_id = ?");
-        $stmt->execute([$id]);
+        $stmt = $db->prepare("SELECT COUNT(*) FROM products WHERE category_id = ? AND store_id = ?");
+        $stmt->execute([$id, $storeId]);
         $productsCount = (int)$stmt->fetchColumn();
 
         if ($productsCount > 0) {
             errorResponse('Impossibile eliminare: categoria usata da prodotti esistenti', 409);
         }
 
-        $stmt = $db->prepare("DELETE FROM categories WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $db->prepare("DELETE FROM categories WHERE id = ? AND store_id = ?");
+        $stmt->execute([$id, $storeId]);
         successResponse(null, 'Categoria eliminata');
     } catch (Exception $e) {
         logError("Delete categories error: " . $e->getMessage());

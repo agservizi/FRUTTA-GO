@@ -19,6 +19,12 @@ $content = '
             </div>
 
             <div>
+                <label for="store_code" class="block text-sm font-medium text-gray-700">Codice negozio</label>
+                <input type="text" id="store_code" name="store_code" value="main" required
+                       class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-lg">
+            </div>
+
+            <div>
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                 <input type="password" id="password" name="password" required
                        class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-lg">

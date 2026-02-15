@@ -18,9 +18,11 @@ if (empty($action)) {
     $requestUri = $_SERVER['REQUEST_URI'];
     $path = parse_url($requestUri, PHP_URL_PATH);
 
-    // Rimuovi /api.php/ dal path
+    // Supporta sia /api.php/... che /public/api.php/...
     if (strpos($path, '/api.php/') === 0) {
         $action = str_replace('/api.php/', '', $path);
+    } elseif (strpos($path, '/public/api.php/') === 0) {
+        $action = str_replace('/public/api.php/', '', $path);
     }
 
     // Se l'action contiene parametri, separali

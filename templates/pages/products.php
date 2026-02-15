@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadProducts() {
     try {
-        const response = await fetch('/api.php/products');
+        const response = await fetch('/public/api.php?action=products');
         const result = await response.json();
         if (result.success) {
             products = result.data;
@@ -136,7 +136,7 @@ async function loadProducts() {
 
 async function loadCategories() {
     try {
-        const response = await fetch('/api.php/categories');
+        const response = await fetch('/public/api.php?action=categories');
         const result = await response.json();
         if (result.success) {
             categories = result.data;
@@ -310,7 +310,7 @@ async function saveProduct(e) {
 
     const isEdit = data.id;
     const method = isEdit ? 'PUT' : 'POST';
-    const url = isEdit ? `/api.php/products?id=${data.id}` : '/api.php/products';
+    const url = isEdit ? `/public/api.php?action=products&id=${data.id}` : '/public/api.php?action=products';
 
     try {
         const response = await fetch(url, {
@@ -336,7 +336,7 @@ async function deleteProduct(productId) {
     if (!confirm('Sei sicuro di voler eliminare questo prodotto?')) return;
 
     try {
-        const response = await fetch(`/api.php/products?id=${productId}`, {
+        const response = await fetch(`/public/api.php?action=products&id=${productId}`, {
             method: 'DELETE'
         });
 

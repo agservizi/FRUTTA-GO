@@ -111,7 +111,7 @@
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', async () => {
                     try {
-                        const response = await fetch('/api.php/auth', {
+                        const response = await fetch('/public/api.php?action=auth', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action: 'logout' })

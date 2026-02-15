@@ -128,7 +128,7 @@ document.addEventListener(\'DOMContentLoaded\', () => {
 
 async function loadProducts() {
     try {
-        const response = await fetch(\'/api.php/products\');
+        const response = await fetch(\'/public/api.php?action=products\');
         const result = await response.json();
         if (result.success) {
             products = result.data;
@@ -280,7 +280,7 @@ async function showStock() {
     document.getElementById(\'movements-btn\').classList.add(\'bg-green-500\');
 
     try {
-        const response = await fetch(\'/api.php/inventory\');
+        const response = await fetch(\'/public/api.php?action=inventory\');
         const result = await response.json();
         if (result.success) {
             renderStock(result.data.stock);
@@ -298,7 +298,7 @@ async function showMovements() {
     document.getElementById(\'stock-btn\').classList.add(\'bg-blue-500\');
 
     try {
-        const response = await fetch(\'/api.php/inventory\');
+        const response = await fetch(\'/public/api.php?action=inventory\');
         const result = await response.json();
         if (result.success) {
             renderMovements(result.data.movements);
@@ -367,7 +367,7 @@ async function saveMovement(e) {
     const data = Object.fromEntries(formData);
 
     try {
-        const response = await fetch(\'/api.php/inventory\', {
+        const response = await fetch(\'/public/api.php?action=inventory\', {
             method: \'POST\',
             headers: { \'Content-Type\': \'application/json\' },
             body: JSON.stringify(data)

@@ -52,7 +52,7 @@ async function loadDailyReport() {
     updateButtons();
 
     try {
-        const response = await fetch(\'/api.php/reports?type=daily\');
+        const response = await fetch(\'/public/api.php?action=reports&type=daily\');
         const result = await response.json();
         if (result.success) {
             renderDailyReport(result.data);
@@ -67,7 +67,7 @@ async function loadMonthlyReport() {
     updateButtons();
 
     try {
-        const response = await fetch(\'/api.php/reports?type=monthly\');
+        const response = await fetch(\'/public/api.php?action=reports&type=monthly\');
         const result = await response.json();
         if (result.success) {
             renderMonthlyReport(result.data);

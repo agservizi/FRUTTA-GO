@@ -153,7 +153,7 @@ function setupDropdown(displayId, dropdownId, inputId, textId, onSelect = null) 
 
 async function loadSuppliers() {
     try {
-        const response = await fetch('/api.php/suppliers');
+        const response = await fetch('/public/api.php?action=suppliers');
         const result = await response.json();
         if (!result.success) return;
 
@@ -177,7 +177,7 @@ function renderSuppliersDropdown() {
 
 async function loadProducts() {
     try {
-        const response = await fetch('/api.php/products');
+        const response = await fetch('/public/api.php?action=products');
         const result = await response.json();
         if (!result.success) return;
 
@@ -256,7 +256,7 @@ async function saveSupplier(e) {
     }
 
     try {
-        const response = await fetch('/api.php/suppliers', {
+        const response = await fetch('/public/api.php?action=suppliers', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -358,7 +358,7 @@ async function savePurchase() {
     };
 
     try {
-        const response = await fetch('/api.php/purchases', {
+        const response = await fetch('/public/api.php?action=purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -384,7 +384,7 @@ async function savePurchase() {
 
 async function loadPurchases() {
     try {
-        const response = await fetch('/api.php/purchases');
+        const response = await fetch('/public/api.php?action=purchases');
         const result = await response.json();
         if (!result.success) return;
 

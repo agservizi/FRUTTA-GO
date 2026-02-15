@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadProducts() {
     try {
-        const response = await fetch('/api.php/products');
+        const response = await fetch('/public/api.php?action=products');
         const result = await response.json();
         if (result.success) {
             products = result.data;
@@ -492,7 +492,7 @@ async function completeSale() {
     };
 
     try {
-        const response = await fetch('/api.php/sales', {
+        const response = await fetch('/public/api.php?action=sales', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -520,7 +520,7 @@ async function completeSale() {
 
 async function showReceipt(saleId) {
     try {
-        const response = await fetch(`/api.php/receipt?sale_id=${saleId}`);
+        const response = await fetch(`/public/api.php?action=receipt&sale_id=${saleId}`);
         const html = await response.text();
 
         document.getElementById('receipt-content').innerHTML = html;

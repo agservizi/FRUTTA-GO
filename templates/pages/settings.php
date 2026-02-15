@@ -73,7 +73,7 @@ function setupEventListeners() {
 
 async function loadSettings() {
     try {
-        const response = await fetch('/api.php/settings');
+        const response = await fetch('/public/api.php?action=settings');
         const result = await response.json();
         if (!result.success) return;
 
@@ -100,7 +100,7 @@ async function saveSettings(e) {
     };
 
     try {
-        const response = await fetch('/api.php/settings', {
+        const response = await fetch('/public/api.php?action=settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -119,7 +119,7 @@ async function saveSettings(e) {
 
 async function loadCategories() {
     try {
-        const response = await fetch('/api.php/categories');
+        const response = await fetch('/public/api.php?action=categories');
         const result = await response.json();
         if (!result.success) return;
 
@@ -174,7 +174,7 @@ async function saveCategory(e) {
     }
 
     const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api.php/categories?id=${id}` : '/api.php/categories';
+    const url = id ? `/public/api.php?action=categories&id=${id}` : '/public/api.php?action=categories';
 
     try {
         const response = await fetch(url, {
@@ -206,7 +206,7 @@ async function deleteCategory(id) {
     if (!confirm('Eliminare questa categoria?')) return;
 
     try {
-        const response = await fetch(`/api.php/categories?id=${id}`, {
+        const response = await fetch(`/public/api.php?action=categories&id=${id}`, {
             method: 'DELETE'
         });
 

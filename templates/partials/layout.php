@@ -6,14 +6,20 @@
     <?php
     $appSettings = getAppSettings();
     $storeName = $appSettings['store_name'] ?? APP_NAME;
-    $builtCssFiles = glob(__DIR__ . '/../../public/assets/assets/css-*.css') ?: [];
-    $builtJsFiles = glob(__DIR__ . '/../../public/assets/assets/main-*.js') ?: [];
+    $builtCssFiles = array_values(array_unique(array_merge(
+        glob(__DIR__ . '/../../assets/assets/css-*.css') ?: [],
+        glob(__DIR__ . '/../../public/assets/assets/css-*.css') ?: []
+    )));
+    $builtJsFiles = array_values(array_unique(array_merge(
+        glob(__DIR__ . '/../../assets/assets/main-*.js') ?: [],
+        glob(__DIR__ . '/../../public/assets/assets/main-*.js') ?: []
+    )));
     $cssHref = !empty($builtCssFiles)
-        ? '/public/assets/assets/' . basename($builtCssFiles[0])
-        : 'http://localhost:3001/css/main.css';
+        ? '/assets/assets/' . basename($builtCssFiles[0])
+        : '/assets/css/main.css';
     $jsSrc = !empty($builtJsFiles)
-        ? '/public/assets/assets/' . basename($builtJsFiles[0])
-        : 'http://localhost:3001/js/main.js';
+        ? '/assets/assets/' . basename($builtJsFiles[0])
+        : '/assets/js/main.js';
     ?>
     <title><?php echo h($storeName); ?></title>
     <link href="<?php echo h($cssHref); ?>" rel="stylesheet">

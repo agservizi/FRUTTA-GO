@@ -8,6 +8,9 @@
         "ext-pdo": "*",
         "ext-mysqli": "*"
     },
+    "config": {
+        "platform-check": false
+    },
     "autoload": {
         "psr-4": {
             "App\\": "app/"

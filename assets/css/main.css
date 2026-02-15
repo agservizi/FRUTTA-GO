@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-green-600 text-white hover:bg-green-700;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-4;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500;
+  }
+
+  .modal {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-lg shadow-xl max-w-md w-full mx-4;
+  }
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .text-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+/* High contrast mode for elderly users */
+@media (prefers-contrast: high) {
+  .text-gray-600 {
+    @apply text-gray-900;
+  }
+
+  .text-gray-500 {
+    @apply text-gray-800;
+  }
+}
+
+/* Large text mode toggle */
+.large-text body {
+  font-size: 1.2rem;
+}
+
+.large-text .text-lg {
+  font-size: 1.5rem;
+}
+
+.large-text .text-xl {
+  font-size: 2rem;
+}
+
+.large-text .text-2xl {
+  font-size: 2.5rem;
+}
+
+/* Hide scrollbars only on mobile */
+@media (max-width: 767px) {
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+/* Keep scrollbars visible on desktop */
+@media (min-width: 768px) {
+  * {
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+  }
+
+  *::-webkit-scrollbar {
+    width: initial;
+    height: initial;
+    display: initial;
+  }
+}
+
+/* Inventory page: hide scrollbar also on desktop */
+body.inventory-no-scrollbar,
+body.inventory-no-scrollbar * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body.inventory-no-scrollbar::-webkit-scrollbar,
+body.inventory-no-scrollbar *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}

@@ -14,16 +14,24 @@
         glob(__DIR__ . '/../../assets/assets/main-*.js') ?: [],
         glob(__DIR__ . '/../../public/assets/assets/main-*.js') ?: []
     )));
+    $hasBuiltCss = !empty($builtCssFiles);
+    $hasBuiltJs = !empty($builtJsFiles);
     $cssHref = !empty($builtCssFiles)
         ? '/assets/assets/' . basename($builtCssFiles[0])
-        : '/assets/css/main.css';
+        : '';
     $jsSrc = !empty($builtJsFiles)
         ? '/assets/assets/' . basename($builtJsFiles[0])
-        : '/assets/js/main.js';
+        : '';
     ?>
     <title><?php echo h($storeName); ?></title>
+    <?php if ($hasBuiltCss): ?>
     <link href="<?php echo h($cssHref); ?>" rel="stylesheet">
+    <?php else: ?>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <?php endif; ?>
+    <?php if ($hasBuiltJs): ?>
     <script src="<?php echo h($jsSrc); ?>" defer></script>
+    <?php endif; ?>
     <script>
         window.appSettings = <?php echo json_encode([
             'store_name' => $storeName,

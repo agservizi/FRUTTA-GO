@@ -90,7 +90,8 @@
     </nav>
     <?php endif; ?>
 
-    <main class="pt-36 pb-16 min-h-screen">
+    <?php $mainClasses = isLoggedIn() ? 'pt-36 pb-16 min-h-screen' : ''; ?>
+    <main class="<?php echo h($mainClasses); ?>">
         <?php echo $content; ?>
     </main>
 

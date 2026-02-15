@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Frutta Go</string>
+    <string name="title_activity_main">Frutta Go</string>
+    <string name="package_name">com.fruttago.app</string>
+    <string name="custom_url_scheme">com.fruttago.app</string>
+</resources>

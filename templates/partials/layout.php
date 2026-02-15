@@ -6,10 +6,18 @@
     <?php
     $appSettings = getAppSettings();
     $storeName = $appSettings['store_name'] ?? APP_NAME;
+    $builtCssFiles = glob(__DIR__ . '/../../public/assets/assets/css-*.css') ?: [];
+    $builtJsFiles = glob(__DIR__ . '/../../public/assets/assets/main-*.js') ?: [];
+    $cssHref = !empty($builtCssFiles)
+        ? '/public/assets/assets/' . basename($builtCssFiles[0])
+        : 'http://localhost:3001/css/main.css';
+    $jsSrc = !empty($builtJsFiles)
+        ? '/public/assets/assets/' . basename($builtJsFiles[0])
+        : 'http://localhost:3001/js/main.js';
     ?>
     <title><?php echo h($storeName); ?></title>
-    <link href="http://localhost:3001/css/main.css" rel="stylesheet">
-    <script src="http://localhost:3001/js/main.js" defer></script>
+    <link href="<?php echo h($cssHref); ?>" rel="stylesheet">
+    <script src="<?php echo h($jsSrc); ?>" defer></script>
     <script>
         window.appSettings = <?php echo json_encode([
             'store_name' => $storeName,

@@ -103,12 +103,35 @@ $content = '
         </div>
     </div>
 </div>
+
+<!-- Delete confirm modal -->
+<div id="delete-product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm">
+            <div class="p-4 border-b">
+                <h2 class="text-lg font-semibold">Conferma eliminazione</h2>
+            </div>
+            <div class="p-4">
+                <p id="delete-product-text" class="text-gray-700">Sei sicuro di voler eliminare questo prodotto?</p>
+            </div>
+            <div class="p-4 pt-0 flex space-x-3">
+                <button type="button" id="delete-cancel-btn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">
+                    Annulla
+                </button>
+                <button type="button" id="delete-confirm-btn" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">
+                    Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 ';
 ?>
 
 <script>
 let products = [];
 let categories = [];
+let pendingDeleteProductId = null;
 const CURRENCY = (window.appSettings && window.appSettings.currency_symbol) ? window.appSettings.currency_symbol : '€';
 
 function money(value) {
@@ -152,6 +175,13 @@ function setupEventListeners() {
     document.getElementById('cancel-btn').addEventListener('click', hideProductModal);
     document.getElementById('product-form').addEventListener('submit', saveProduct);
     document.getElementById('search-products').addEventListener('input', filterProducts);
+    document.getElementById('delete-cancel-btn').addEventListener('click', hideDeleteConfirmModal);
+    document.getElementById('delete-confirm-btn').addEventListener('click', confirmDeleteProduct);
+    document.getElementById('delete-product-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'delete-product-modal') {
+            hideDeleteConfirmModal();
+        }
+    });
 
     // Custom dropdown for category
     setupCategoryDropdown();
@@ -333,7 +363,31 @@ async function saveProduct(e) {
 }
 
 async function deleteProduct(productId) {
-    if (!confirm('Sei sicuro di voler eliminare questo prodotto?')) return;
+    const product = products.find(p => p.id == productId);
+    showDeleteConfirmModal(productId, product ? product.name : null);
+}
+
+function showDeleteConfirmModal(productId, productName = null) {
+    pendingDeleteProductId = productId;
+    const text = productName
+        ? `Sei sicuro di voler eliminare "${productName}"?`
+        : 'Sei sicuro di voler eliminare questo prodotto?';
+    document.getElementById('delete-product-text').textContent = text;
+    document.getElementById('delete-product-modal').classList.remove('hidden');
+}
+
+function hideDeleteConfirmModal() {
+    pendingDeleteProductId = null;
+    document.getElementById('delete-product-modal').classList.add('hidden');
+}
+
+async function confirmDeleteProduct() {
+    if (!pendingDeleteProductId) {
+        return;
+    }
+
+    const productId = pendingDeleteProductId;
+    hideDeleteConfirmModal();
 
     try {
         const response = await fetch(`/public/api.php?action=products&id=${productId}`, {

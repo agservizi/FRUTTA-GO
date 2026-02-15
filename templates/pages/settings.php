@@ -53,12 +53,30 @@ $content = '
         <div id="categories-list" class="space-y-2"></div>
     </div>
 </div>
+
+<div id="delete-category-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm">
+            <div class="p-4 border-b">
+                <h2 class="text-lg font-semibold">Conferma eliminazione</h2>
+            </div>
+            <div class="p-4">
+                <p id="delete-category-text" class="text-gray-700">Eliminare questa categoria?</p>
+            </div>
+            <div class="p-4 pt-0 flex space-x-3">
+                <button type="button" id="delete-category-cancel-btn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Annulla</button>
+                <button type="button" id="delete-category-confirm-btn" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">Elimina</button>
+            </div>
+        </div>
+    </div>
+</div>
 ';
 
 ob_start();
 ?>
 <script>
 let categories = [];
+let pendingDeleteCategoryId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
@@ -69,6 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     document.getElementById('settings-form').addEventListener('submit', saveSettings);
     document.getElementById('category-form').addEventListener('submit', saveCategory);
+    document.getElementById('delete-category-cancel-btn').addEventListener('click', hideDeleteCategoryModal);
+    document.getElementById('delete-category-confirm-btn').addEventListener('click', confirmDeleteCategory);
+    document.getElementById('delete-category-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'delete-category-modal') {
+            hideDeleteCategoryModal();
+        }
+    });
 }
 
 async function loadSettings() {
@@ -203,7 +228,31 @@ function resetCategoryForm() {
 }
 
 async function deleteCategory(id) {
-    if (!confirm('Eliminare questa categoria?')) return;
+    const category = categories.find(c => c.id == id);
+    showDeleteCategoryModal(id, category ? category.name : null);
+}
+
+function showDeleteCategoryModal(id, name = null) {
+    pendingDeleteCategoryId = id;
+    const text = name
+        ? `Eliminare la categoria "${name}"?`
+        : 'Eliminare questa categoria?';
+    document.getElementById('delete-category-text').textContent = text;
+    document.getElementById('delete-category-modal').classList.remove('hidden');
+}
+
+function hideDeleteCategoryModal() {
+    pendingDeleteCategoryId = null;
+    document.getElementById('delete-category-modal').classList.add('hidden');
+}
+
+async function confirmDeleteCategory() {
+    if (!pendingDeleteCategoryId) {
+        return;
+    }
+
+    const id = pendingDeleteCategoryId;
+    hideDeleteCategoryModal();
 
     try {
         const response = await fetch(`/public/api.php?action=categories&id=${id}`, {

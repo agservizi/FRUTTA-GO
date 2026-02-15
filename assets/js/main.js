@@ -138,14 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Header scroll effect
     const header = document.getElementById('main-header');
     if (header) {
+        header.classList.add('bg-white');
+        header.classList.remove('bg-transparent');
         window.addEventListener('scroll', () => {
-            if (window.scrollY > 0) {
-                header.classList.add('bg-white');
-                header.classList.remove('bg-transparent');
-            } else {
-                header.classList.add('bg-transparent');
-                header.classList.remove('bg-white');
-            }
+            header.classList.add('bg-white');
+            header.classList.remove('bg-transparent');
         });
     }
 });

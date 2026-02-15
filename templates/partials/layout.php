@@ -46,7 +46,7 @@
 <?php if (!empty($current_page) && $current_page === 'inventory') { $bodyClasses .= ' inventory-no-scrollbar'; } ?>
 <body class="<?php echo h($bodyClasses); ?>">
     <?php if (isLoggedIn()): ?>
-    <header id="main-header" class="bg-transparent shadow-sm fixed top-0 left-0 right-0 z-40 px-4 py-0 flex justify-between items-center transition-colors duration-300">
+    <header id="main-header" class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40 px-4 py-0 flex justify-between items-center transition-colors duration-300">
         <img src="/assets/img/logo-fruttago.png" alt="Frutta Go" class="h-32">
         <button id="logout-btn" class="text-gray-600 hover:text-gray-900 p-2">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

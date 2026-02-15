@@ -24,17 +24,17 @@ $content = '
                        class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-lg">
             </div>
 
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" id="remember" name="remember" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                <span>Rimani connesso</span>
+            </label>
+
             <button type="submit"
                     class="w-full bg-green-600 text-white py-4 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-lg font-medium">
                 Accedi
             </button>
         </form>
 
-        <div class="mt-6 text-center">
-            <p class="text-sm text-gray-600">
-                Username: admin, Password: admin123
-            </p>
-        </div>
     </div>
 </div>
 ';
@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Rimuovi il token CSRF dai dati da inviare
         const data = Object.fromEntries(formData);
         delete data.csrf_token;
+        data.remember = formData.get('remember') === 'on';
 
         try {
             const response = await fetch('/api.php/auth', {

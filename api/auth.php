@@ -6,15 +6,24 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $action = $data['action'] ?? '';
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 
     if ($action === 'logout') {
         // Logout
+        setcookie(session_name(), '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => $isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
         session_destroy();
         successResponse(['message' => 'Logout effettuato']);
     } else {
         // Login
         $username = $data['username'] ?? '';
         $password = $data['password'] ?? '';
+        $remember = filter_var($data['remember'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         if (empty($username) || empty($password)) {
             errorResponse('Username e password richiesti');
@@ -29,6 +38,17 @@ if ($method === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_role'] = $user['role'];
+
+                if ($remember) {
+                    setcookie(session_name(), session_id(), [
+                        'expires' => time() + (REMEMBER_ME_DAYS * 86400),
+                        'path' => '/',
+                        'secure' => $isSecure,
+                        'httponly' => true,
+                        'samesite' => 'Lax'
+                    ]);
+                }
+
                 successResponse(['user' => ['name' => $user['name'], 'role' => $user['role']]]);
             } else {
                 errorResponse('Credenziali non valide', 401);

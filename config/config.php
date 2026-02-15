@@ -41,6 +41,7 @@ define('APP_NAME', 'Frutta Go');
 define('APP_URL', $_ENV['APP_URL'] ?? 'http://localhost');
 define('SESSION_NAME', 'frutta_go_session');
 define('CSRF_TOKEN_NAME', 'csrf_token');
+define('REMEMBER_ME_DAYS', (int)($_ENV['REMEMBER_ME_DAYS'] ?? 30));
 
 // Paths
 define('ROOT_DIR', __DIR__ . '/../');
@@ -55,4 +56,12 @@ error_reporting(E_ALL);
 ini_set('display_errors', $_ENV['DEBUG'] ?? false ? 1 : 0);
 ini_set('log_errors', 1);
 ini_set('error_log', STORAGE_DIR . 'logs/error.log');
+
+// Session defaults
+$sessionLifetime = REMEMBER_ME_DAYS * 86400;
+ini_set('session.gc_maxlifetime', (string)$sessionLifetime);
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_secure', strpos(APP_URL, 'https://') === 0 ? '1' : '0');
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_path', '/');
 ?>
